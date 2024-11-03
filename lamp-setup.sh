@@ -26,21 +26,16 @@ echo -e "${GREEN}Running MySQL secure installation...${NC}"
 
 expect <<EOF
 spawn sudo mysql_secure_installation
-echo -e "${GREEN}Validating password component...${NC}"
 expect "Validate password component?"
 send "y\r"
 expect "Please enter 0 = LOW, 1 = MEDIUM and 2 = STRONG:"
 send "1\r"
-echo -e "${GREEN}Removes anonymous users...${NC}"
 expect "Remove anonymous users? (Press y|Y for Yes, any other key for No) :"
 send "y\r"
-echo -e "${GREEN}Disallows root to login remotely...${NC}"
 expect "Disallow root login remotely? (Press y|Y for Yes, any other key for No) :"
 send "y\r"
-echo -e "${GREEN}Removes test database and access to it...${NC}"
 expect "Remove test database and access to it? (Press y|Y for Yes, any other key for No) :"
 send "y\r"
-echo -e "${GREEN}Reloads the privilege table...${NC}"
 expect "Reload privilege tables now? (Press y|Y for Yes, any other key for No) :"
 send "y\r"
 expect eof
