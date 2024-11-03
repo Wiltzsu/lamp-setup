@@ -4,6 +4,9 @@
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
+# Install expect
+sudo apt install expect
+
 # Install Apache
 echo -e "${GREEN}Installing Apache...${NC}"
 sudo apt install apache2
@@ -21,10 +24,8 @@ sudo apt install mysql-server
 # Run the secure installation script for MySQL
 echo -e "${GREEN}Running MySQL secure installation...${NC}"
 
-set timeout -1
-
+expect <<EOF
 spawn sudo mysql_secure_installation
-
 echo -e "${GREEN}Validating password component...${NC}"
 expect "Validate password component?"
 send "y\r"
@@ -42,8 +43,8 @@ send "y\r"
 echo -e "${GREEN}Reloads the privilege table...${NC}"
 expect "Reload privilege tables now? (Press y|Y for Yes, any other key for No) :"
 send "y\r"
-
 expect eof
+EOF
 
 echo -e "${GREEN}MySQL secure installation ready...${NC}"
 
