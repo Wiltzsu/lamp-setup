@@ -25,8 +25,14 @@ sudo apt install mysql-server
 echo -e "${GREEN}Running MySQL secure installation...${NC}"
 
 expect <<EOF
-sudo mysql_secure_installation
-expect "Validate password component?"
+spawn sudo mysql_secure_installation
+
+# Handle the sudo password prompt
+expect "password for *:"
+send "changeme\r"
+
+# Proceed with MySQL secure installation
+expect "VALIDATE PASSWORD COMPONENT"
 send "y\r"
 expect "Please enter 0 = LOW, 1 = MEDIUM and 2 = STRONG:"
 send "1\r"
