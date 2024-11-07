@@ -5,6 +5,7 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 # Install expect
+echo -e "${GREEN}Installing Expect...${$}"
 sudo apt install expect
 
 # Install Apache
@@ -31,7 +32,7 @@ spawn sudo mysql_secure_installation
 expect "password for *:"
 send "changeme\r"
 
-# Proceed with MySQL secure installation
+# Proceed with MySQL secure installation and set default values
 expect "VALIDATE PASSWORD COMPONENT"
 send "y\r"
 expect "Please enter 0 = LOW, 1 = MEDIUM and 2 = STRONG:"
@@ -49,14 +50,18 @@ EOF
 
 echo -e "${GREEN}MySQL secure installation ready...${NC}"
 
+echo -e "${GREEN}Installing PHP...${NC}"
+sudo apt install -y php libapache2-mod-php php-mysql
 
 # Uninstall redundant files
-echo -e "${GREEN}Removing redundant files...${NC}"
+echo -e "${GREEN}Cleaning up unnecessary packages...${NC}"
 sudo apt autoremove
 
 # Reload system configuration and restart Apache
 echo -e "${GREEN}Reloading daemon...${NC}"
 sudo systemctl daemon-reload
 echo -e "${GREEN}Restaring Apache...${NC}"
-sudo systemctl restart apache2
+sudo systemctl restart apache2.service
+
+echo -e "${GREEN}LAMP stack installation complete!${NC}"
 
