@@ -6,17 +6,12 @@ NC='\033[0m' # No Color
 
 # Install expect
 echo -e "${PURPLE}Installing Expect...${NC}"
-sudo apt install expect
+sudo apt install -y expect
 
 
 # Install Apache
-expect <<EOF
 echo -e "${PURPLE}Installing Apache...${NC}"
-spawn sudo apt install apache2
-expect "Continue"
-send "y\r"
-expect eof
-EOF
+sudo apt install -y apache2
 
 # Append "ServerName 127.0.0.1" to Apache's configuration file
 echo -e "${PURPLE}Adding localhost server name to configuration file...${NC}"
