@@ -21,7 +21,7 @@ fi
 
 # Install MySQL server
 echo -e "${PURPLE}Installing MySQL server...${NC}"
-sudo apt install mysql-server
+sudo apt install -y mysql-server
 
 # Run the secure installation script for MySQL
 echo -e "${PURPLE}Running MySQL secure installation...${NC}"
@@ -36,6 +36,8 @@ send "changeme\r"
 # Proceed with MySQL secure installation and set default values
 expect "VALIDATE PASSWORD COMPONENT"
 send "y\r"
+expect "Please enter 0 = LOW, 1 = MEDIUM and 2 = STRONG:"
+send "1\r"
 expect "Remove anonymous users? (Press y|Y for Yes, any other key for No) :"
 send "y\r"
 expect "Disallow root login remotely? (Press y|Y for Yes, any other key for No) :"
