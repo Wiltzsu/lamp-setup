@@ -1,77 +1,58 @@
 #!/bin/bash
 
-# Get sudo password at the start to automate the prompt later on
-read -sp "Enter sudo password: " SUDO_PASSWORD
-echo "" # Add newline
-
-# Define a few color codes
+# Define colors
 PURPLE='\033[0;35m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Install expect
-echo -e "${PURPLE}Installing Expect...${NC}"
-sudo apt install -y expect
+# Logging setup
+LOG_FILE="lamp_install.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
 
+echo -e "${PURPLE}Updating package list...${NC}"
+sudo apt update
 
-# Install Apache
-echo -e "${PURPLE}Installing Apache...${NC}"
-sudo apt install -y apache2
+echo -e "${PURPLE}Installing required packages...${NC}"
+sudo apt install -y apache2 mysql-server php libapache2-mod-php php-mysql expect || {
+    echo "Error: Package installation failed." >&2
+    exit 1
+}
 
-# Append "ServerName 127.0.0.1" to Apache's configuration file
-echo -e "${PURPLE}Adding localhost server name to configuration file...${NC}"
+# Apache configuration
+echo -e "${PURPLE}Configuring Apache...${NC}"
 if ! grep -q "ServerName 127.0.0.1" /etc/apache2/apache2.conf; then
     echo "ServerName 127.0.0.1" | sudo tee -a /etc/apache2/apache2.conf > /dev/null
 fi
+sudo systemctl restart apache2
 
-# Install MySQL server
-echo -e "${PURPLE}Installing MySQL server...${NC}"
-sudo apt install -y mysql-server
+# MySQL secure setup
+echo -e "${PURPLE}Securing MySQL...${NC}"
+sudo mysql -e "DELETE FROM mysql.user WHERE User='';"
+sudo mysql -e "DROP DATABASE IF EXISTS test;"
+sudo mysql -e "FLUSH PRIVILEGES;"
 
-# Run the secure installation script for MySQL
-echo -e "${PURPLE}Running MySQL secure installation...${NC}"
+# Define the file path
+MYSQL_CONFIG_FILE="/etc/mysql/mysql.conf.d/mysqld.cnf"
 
-expect <<EOF
-spawn sudo mysql_secure_installation
+# Check if the [mysqld] section exists, and add or modify the bind-address setting
+echo -e "${PURPLE}Configuring MySQL to bind to localhost only...${NC}"
 
-# Handle the sudo password prompt 
-expect "password for *:"
-send "$SUDO_PASSWORD\r"
+if grep -q "^\[mysqld\]" "$MYSQL_CONFIG_FILE"; then
+    # If [mysqld] exists, update or add the bind-address line
+    sudo sed -i '/^\[mysqld\]/,/^\[/ s/^bind-address.*/bind-address = 127.0.0.1/' "$MYSQL_CONFIG_FILE" || 
+    echo "bind-address = 127.0.0.1" | sudo tee -a "$MYSQL_CONFIG_FILE" > /dev/null
+else
+    # If [mysqld] doesn't exist, add it with the bind-address setting
+    echo -e "\n[mysqld]\nbind-address = 127.0.0.1" | sudo tee -a "$MYSQL_CONFIG_FILE" > /dev/null
+fi
 
-# Proceed with MySQL secure installation and set default values
-expect "VALIDATE PASSWORD COMPONENT"
-send "y\r"
-expect "Please enter 0 = LOW, 1 = MEDIUM and 2 = STRONG:"
-send "1\r"
-expect "Remove anonymous users? (Press y|Y for Yes, any other key for No) :"
-send "y\r"
-expect "Disallow root login remotely? (Press y|Y for Yes, any other key for No) :"
-send "y\r"
-expect "Remove test database and access to it? (Press y|Y for Yes, any other key for No) :"
-send "y\r"
-expect "Reload privilege tables now? (Press y|Y for Yes, any other key for No) :"
-send "y\r"
-expect eof
-EOF
+# Restart MySQL to apply changes
+echo -e "${PURPLE}Restarting MySQL service to apply changes...${NC}"
+sudo systemctl restart mysql
 
-echo -e "${PURPLE}MySQL secure installation ready...${NC}"
-
-echo -e "${PURPLE}Installing PHP...${NC}"
-sudo apt install -y php libapache2-mod-php php-mysql
-
-# Uninstall redundant files
-echo -e "${PURPLE}Cleaning up unnecessary packages...${NC}"
-sudo apt autoremove
-
-# Print Apache, MySQL and PHP versions
+# Verify installations
+echo -e "${PURPLE}Verifying installation...${NC}"
 apache2 -v
 mysql --version
 php -v
 
-# Reload system configuration and restart Apache
-echo -e "${PURPLE}Reloading daemon...${NC}"
-sudo systemctl daemon-reload
-echo -e "${PURPLE}Restaring Apache...${NC}"
-sudo systemctl restart apache2.service
-
 echo -e "${PURPLE}LAMP stack installation complete!${NC}"
-
