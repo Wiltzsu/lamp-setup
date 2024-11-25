@@ -1,58 +1,114 @@
 #!/bin/bash
 
 # Define colors
-PURPLE='\033[0;35m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
 NC='\033[0m'
 
 # Logging setup
-LOG_FILE="lamp_install.log"
+LOG_FILE="/var/log/lamp_install.log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
-echo -e "${PURPLE}Updating package list...${NC}"
-sudo apt update
-
-echo -e "${PURPLE}Installing required packages...${NC}"
-sudo apt install -y apache2 mysql-server php libapache2-mod-php php-mysql expect || {
-    echo "Error: Package installation failed." >&2
+# Function to log errors
+log_error() {
+    echo -e "${RED}Error: $1${NC}"
     exit 1
 }
 
-# Apache configuration
-echo -e "${PURPLE}Configuring Apache...${NC}"
+# LAMP Stack Installation
+echo -e "${GREEN}Updating package list...${NC}"
+sudo apt update || log_error "Failed to update package list"
+
+echo -e "${GREEN}Installing required packages...${NC}"
+sudo apt install -y apache2 mysql-server php libapache2-mod-php php-mysql expect ufw || log_error "Failed to install packages"
+
+# Apache Configuration
+echo -e "${GREEN}Configuring Apache...${NC}"
 if ! grep -q "ServerName 127.0.0.1" /etc/apache2/apache2.conf; then
     echo "ServerName 127.0.0.1" | sudo tee -a /etc/apache2/apache2.conf > /dev/null
 fi
-sudo systemctl restart apache2
+sudo systemctl restart apache2 || log_error "Failed to restart Apache"
 
-# MySQL secure setup
-echo -e "${PURPLE}Securing MySQL...${NC}"
+# MySQL Secure Setup
+echo -e "${GREEN}Securing MySQL...${NC}"
 sudo mysql -e "DELETE FROM mysql.user WHERE User='';"
 sudo mysql -e "DROP DATABASE IF EXISTS test;"
 sudo mysql -e "FLUSH PRIVILEGES;"
 
-# Define the file path
-MYSQL_CONFIG_FILE="/etc/mysql/mysql.conf.d/mysqld.cnf"
+# Configure UFW Firewall
+echo -e "${GREEN}Configuring UFW firewall...${NC}"
+sudo ufw allow 'Apache Full'
+sudo ufw allow ssh
+sudo ufw enable || log_error "Failed to enable UFW"
+sudo ufw status
 
-# Check if the [mysqld] section exists, and add or modify the bind-address setting
-echo -e "${PURPLE}Configuring MySQL to bind to localhost only...${NC}"
-
-if grep -q "^\[mysqld\]" "$MYSQL_CONFIG_FILE"; then
-    # If [mysqld] exists, update or add the bind-address line
-    sudo sed -i '/^\[mysqld\]/,/^\[/ s/^bind-address.*/bind-address = 127.0.0.1/' "$MYSQL_CONFIG_FILE" || 
-    echo "bind-address = 127.0.0.1" | sudo tee -a "$MYSQL_CONFIG_FILE" > /dev/null
-else
-    # If [mysqld] doesn't exist, add it with the bind-address setting
-    echo -e "\n[mysqld]\nbind-address = 127.0.0.1" | sudo tee -a "$MYSQL_CONFIG_FILE" > /dev/null
-fi
-
-# Restart MySQL to apply changes
-echo -e "${PURPLE}Restarting MySQL service to apply changes...${NC}"
-sudo systemctl restart mysql
-
-# Verify installations
-echo -e "${PURPLE}Verifying installation...${NC}"
+# Verify Installations
+echo -e "${GREEN}Verifying installations...${NC}"
 apache2 -v
 mysql --version
 php -v
 
-echo -e "${PURPLE}LAMP stack installation complete!${NC}"
+# Virtual Host and Database Setup
+echo -e "${GREEN}Setting up a new project...${NC}"
+
+# Ask for project name
+read -p "Enter the project name: " PROJECT_NAME
+
+# Validate project name
+if [[ -z "$PROJECT_NAME" || "$PROJECT_NAME" =~ [[:space:]] ]]; then
+    echo -e "${YELLOW}Project name cannot be empty or contain spaces.${NC}"
+    exit 1
+fi
+
+# Define variables
+PROJECT_DIR="/var/www/html/$PROJECT_NAME"
+DB_NAME="$PROJECT_NAME"
+APACHE_CONF="/etc/apache2/sites-available/$PROJECT_NAME.conf"
+ETC_HOSTS="/etc/hosts"
+
+# Create project directory
+if [ -d "$PROJECT_DIR" ]; then
+    echo -e "${YELLOW}Project $PROJECT_NAME already exists.${NC}"
+    exit 1
+else
+    sudo mkdir -p "$PROJECT_DIR"
+    echo "<?php phpinfo(); ?>" | sudo tee "$PROJECT_DIR/index.php" > /dev/null
+    sudo chown -R www-data:www-data "$PROJECT_DIR"
+    sudo chmod -R 755 "$PROJECT_DIR"
+    echo -e "${GREEN}Project directory created at $PROJECT_DIR${NC}"
+fi
+
+# Create database
+echo -e "${GREEN}Creating database $DB_NAME...${NC}"
+sudo mysql -e "CREATE DATABASE IF NOT EXISTS $DB_NAME;" || log_error "Failed to create database"
+
+# Create Apache virtual host configuration
+echo -e "${GREEN}Creating Apache configuration for $PROJECT_NAME...${NC}"
+sudo tee "$APACHE_CONF" > /dev/null <<EOF
+<VirtualHost *:80>
+    ServerName $PROJECT_NAME.local
+    DocumentRoot $PROJECT_DIR
+
+    <Directory $PROJECT_DIR>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog /var/log/apache2/${PROJECT_NAME}-error.log
+    CustomLog /var/log/apache2/${PROJECT_NAME}-access.log combined
+</VirtualHost>
+EOF
+
+# Add project to /etc/hosts
+if ! grep -q "$PROJECT_NAME.local" $ETC_HOSTS; then
+    echo "127.0.0.1 $PROJECT_NAME.local" | sudo tee -a $ETC_HOSTS > /dev/null
+    echo -e "${GREEN}Added $PROJECT_NAME.local to /etc/hosts${NC}"
+fi
+
+# Enable virtual host
+sudo a2ensite "$PROJECT_NAME.conf" || log_error "Failed to enable virtual host"
+sudo systemctl reload apache2 || log_error "Failed to reload Apache"
+
+echo -e "${GREEN}Setup for $PROJECT_NAME complete! Access it at http://$PROJECT_NAME.local${NC}"
