@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Get sudo password at the start to automate the prompt later on
+read -sp "Enter sudo password: " SUDO_PASSWORD
+echo "" # Add newline
+
 # Define a few color codes
 PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
@@ -31,7 +35,7 @@ spawn sudo mysql_secure_installation
 
 # Handle the sudo password prompt 
 expect "password for *:"
-send "changeme\r"
+send "$SUDO_PASSWORD\r"
 
 # Proceed with MySQL secure installation and set default values
 expect "VALIDATE PASSWORD COMPONENT"
