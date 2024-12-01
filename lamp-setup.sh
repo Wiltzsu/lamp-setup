@@ -29,7 +29,7 @@ echo -e "${GREEN}Updating package list...${NC}"
 sudo apt update || log_error "Failed to update package list"
 
 echo -e "${GREEN}Installing required packages...${NC}"
-sudo apt install -y apache2 mysql-server php libapache2-mod-php php-mysql expect ufw || log_error "Failed to install packages"
+sudo apt install -y apache2 mysql-server php libapache2-mod-php php-mysql ufw || log_error "Failed to install packages"
 
 # Apache Configuration
 echo -e "${GREEN}Configuring Apache...${NC}"
@@ -37,12 +37,6 @@ if ! grep -q "ServerName 127.0.0.1" /etc/apache2/apache2.conf; then
     echo "ServerName 127.0.0.1" | sudo tee -a /etc/apache2/apache2.conf > /dev/null
 fi
 sudo systemctl restart apache2 || log_error "Failed to restart Apache"
-
-# MySQL Secure Setup
-echo -e "${GREEN}Securing MySQL...${NC}"
-sudo mysql -e "DELETE FROM mysql.user WHERE User='';"
-sudo mysql -e "DROP DATABASE IF EXISTS test;"
-sudo mysql -e "FLUSH PRIVILEGES;"i 
 
 # Configure UFW Firewall
 echo -e "${GREEN}Configuring UFW firewall...${NC}"
@@ -123,6 +117,6 @@ EOF
     sudo systemctl reload apache2 || log_error "Failed to reload Apache"
 
     echo -e "${GREEN}Setup for $PROJECT_NAME complete! Access it at http://$PROJECT_NAME.local${NC}"
-else
-    echo -e "${GREEN}No new project created. Script finished.${NC}"
-fi
+    else
+        echo -e "${GREEN}No new project created. Script finished.${NC}"
+    fi
