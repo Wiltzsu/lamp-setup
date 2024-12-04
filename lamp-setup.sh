@@ -134,7 +134,9 @@ EOF
 
     # Enable the new virtual host and reload Apache
     # This makes the new site configuration active
+    echo -e "${GREEN}Enabling virtual host...${NC}"
     sudo a2ensite "$PROJECT_NAME.conf" || log_error "Failed to enable virtual host"
+    echo -e "${GREEN}Reloading Apache...${NC}"
     sudo systemctl reload apache2 || log_error "Failed to reload Apache"
 
     # Inform the user that the setup is complete and provide the URL
