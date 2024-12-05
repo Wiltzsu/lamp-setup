@@ -37,7 +37,7 @@ sudo apt update || log_error "Failed to update package list"
 
 # Install Apache, MySQL, PHP and other necessary packages
 echo -e "${GREEN}Installing required packages...${NC}"
-sudo apt install -y apache2 mysql-server php libapache2-mod-php php-mysql ufw || log_error "Failed to install packages"
+sudo apt install -y apache2 mysql-server php libapache2-mod-php php-cli php-common php-mysql ufw || log_error "Failed to install packages"
 
 # Apache Configuration
 # Add 'ServerName' to Apache configuration to suppress a warning
@@ -104,13 +104,13 @@ if [[ "$CREATE_PROJECT" =~ ^[Yy]$ ]]; then
     fi
 
     # Create a MySQL database for the project
-    echo -e "${GREEN}Creating database $DB_NAME...${NC}"
+    echo -e "${GREEN}Creating database for $DB_NAME...${NC}"
     sudo mysql -e "CREATE DATABASE IF NOT EXISTS $DB_NAME;" || log_error "Failed to create database"
 
     # Create Apache virtual host configuration for the project
     echo -e "${GREEN}Creating Apache configuration for $PROJECT_NAME...${NC}"
     sudo tee "$APACHE_CONF" > /dev/null <<EOF
-    <VirtualHost *:80>
+<VirtualHost *:80>
     ServerName $PROJECT_NAME.local
     DocumentRoot $PROJECT_DIR
 
@@ -125,10 +125,14 @@ if [[ "$CREATE_PROJECT" =~ ^[Yy]$ ]]; then
 </VirtualHost>
 EOF
 
+    # Print the locations of the error and access logs
+    echo -e "${GREEN}Created ${PROJECT_NAME} error log file in /var/log/apache2/${PROJECT_NAME}-error.log${NC}"
+    echo -e "${GREEN}Created ${PROJECT_NAME} access log file in /var/log/apache2/${PROJECT_NAME}-access.log${NC}"
+
     # Add project to domain to /etc/hosts for local access
     # This maps the project domain to localhost (127.0.0.1)
     if ! grep -q "$PROJECT_NAME.local" $ETC_HOSTS; then
-        echo "127.0.0.1 $PROJECT_NAME.local" | sudo tee -a $ETC_HOSTS > /dev/null
+        echo -e "127.0.0.1 $PROJECT_NAME.local" | sudo tee -a $ETC_HOSTS > /dev/null
         echo -e "${GREEN}Added $PROJECT_NAME.local to /etc/hosts${NC}"
     fi
 
