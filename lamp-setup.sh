@@ -32,16 +32,17 @@ log_error() {
 
 # LAMP Stack Installation
 # Update the package list to ensure we have the latest packages
-echo -e "${GREEN}Updating package list...${NC}"
+echo -e "${YELLOW}Updating package list...${NC}"
 sudo apt update || log_error "Failed to update package list"
 
 # Install Apache, MySQL, PHP and other necessary packages
-echo -e "${GREEN}Installing required packages...${NC}"
+echo -e "${YELLOW}Installing required packages...${NC}"
 sudo apt install -y apache2 mysql-server php libapache2-mod-php php-cli php-common php-mysql ufw || log_error "Failed to install packages"
+echo -e "${GREEN}Packages installed!${NC}"
 
 # Apache Configuration
 # Add 'ServerName' to Apache configuration to suppress a warning
-echo -e "${GREEN}Configuring Apache...${NC}"
+echo -e "${YELLOW}Configuring Apache...${NC}"
 if ! grep -q "ServerName 127.0.0.1" /etc/apache2/apache2.conf; then
     echo "ServerName 127.0.0.1" | sudo tee -a /etc/apache2/apache2.conf > /dev/null
 fi
@@ -51,7 +52,7 @@ sudo systemctl restart apache2 || log_error "Failed to restart Apache"
 
 # Configure UFW Firewall
 # Allow traffic for Apache and SSH, then enable the firewall
-echo -e "${GREEN}Configuring UFW firewall...${NC}"
+echo -e "${YELLOW}Configuring UFW firewall...${NC}"
 sudo ufw allow 'Apache Full'
 sudo ufw allow ssh
 sudo ufw enable || log_error "Failed to enable UFW"
@@ -60,7 +61,7 @@ sudo ufw status
 
 # Verify Installations
 # Print the installed versions of Apache, MySQL and PHP
-echo -e "${GREEN}Verifying installations...${NC}"
+echo -e "${YELLOW}Verifying installations...${NC}"
 apache2 -v
 mysql --version
 php -v
@@ -71,7 +72,6 @@ read -p "Do you want to create a new project? (y/n): " CREATE_PROJECT
 
 # If the user wants to create a project, proceed
 if [[ "$CREATE_PROJECT" =~ ^[Yy]$ ]]; then
-    echo -e "${GREEN}Setting up a new project...${NC}"
 
     # Ask for project name
     read -p "Enter the project name: " PROJECT_NAME
@@ -82,6 +82,8 @@ if [[ "$CREATE_PROJECT" =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW}Project name cannot be empty or contain spaces.${NC}"
         exit 1
     fi
+
+    echo -e "${YELLOW}Setting up a new project...${NC}"
 
     # Define variables for project setup
     PROJECT_DIR="/var/www/html/$PROJECT_NAME"
@@ -96,7 +98,7 @@ if [[ "$CREATE_PROJECT" =~ ^[Yy]$ ]]; then
     else
         sudo mkdir -p "$PROJECT_DIR"
         # Create a simple PHP file to test the setup
-        echo "<?php phpinfo(); ?>" | sudo tee "$PROJECT_DIR/index.php" > /dev/null
+        echo "<?php <p>Hello world!</p>; ?>" | sudo tee "$PROJECT_DIR/index.php" > /dev/null
         # Set ownership and permissions for the project directory
         sudo chown -R www-data:www-data "$PROJECT_DIR"
         sudo chmod -R 755 "$PROJECT_DIR"
@@ -104,11 +106,11 @@ if [[ "$CREATE_PROJECT" =~ ^[Yy]$ ]]; then
     fi
 
     # Create a MySQL database for the project
-    echo -e "${GREEN}Creating database for $DB_NAME...${NC}"
+    echo -e "${YELLOW}Creating database for $DB_NAME...${NC}"
     sudo mysql -e "CREATE DATABASE IF NOT EXISTS $DB_NAME;" || log_error "Failed to create database"
 
     # Create Apache virtual host configuration for the project
-    echo -e "${GREEN}Creating Apache configuration for $PROJECT_NAME...${NC}"
+    echo -e "${YELLOW}Creating Apache configuration for $PROJECT_NAME...${NC}"
     sudo tee "$APACHE_CONF" > /dev/null <<EOF
 <VirtualHost *:80>
     ServerName $PROJECT_NAME.local
@@ -138,12 +140,12 @@ EOF
 
     # Enable the new virtual host and reload Apache
     # This makes the new site configuration active
-    echo -e "${GREEN}Enabling virtual host...${NC}"
+    echo -e "${YELLOW}Enabling virtual host...${NC}"
     sudo a2ensite "$PROJECT_NAME.conf" || log_error "Failed to enable virtual host"
-    echo -e "${GREEN}Reloading Apache...${NC}"
+    echo -e "${YELLOW}Reloading Apache...${NC}"
     sudo systemctl reload apache2 || log_error "Failed to reload Apache"
 
-    # Inform the user that the setup is complete and provide the URL
+    # Inform the user that the setup is complete and provide the URL to access the project
     echo -e "${GREEN}Setup for $PROJECT_NAME complete! Access it at http://$PROJECT_NAME.local${NC}"
     else
     # If user chose not to create a new project, finish the script
