@@ -1,4 +1,4 @@
-# ⚡ LAMP Stack Automation Script
+# LAMP Stack Automation Script
 
 This script automates the setup of a **LAMP stack (Linux, Apache, MySQL, PHP)** on Ubuntu-based systems. It includes options to create a development environment with a virtual host and database for your project. The script is designed to reduce manual work and ensure a smooth installation process.
 This script was developed as part of a thesis project to explore automation in LAMP stack setup.
@@ -7,7 +7,7 @@ For any issues or suggestions, feel free to open an issue in the GitHub reposito
 
 ---
 
-## 📋 What the Script Does
+## What the Script Does
 
 ### 🛠️ Installs Required Software:
 - **Apache** (Web Server)
@@ -20,12 +20,7 @@ For any issues or suggestions, feel free to open an issue in the GitHub reposito
 - Sets a default `ServerName` to suppress warnings.
 - Restarts the Apache service to apply changes.
 
-### 🔒 Secures MySQL:
-- Removes unused default users.
-- Drops the `test` database if it exists.
-- Flushes privileges to apply changes.
-
-### 🔐 Firewall Configuration (Optional):
+### 🔐 Firewall Configuration:
 - Enables **UFW** and allows traffic for **Apache** and **SSH**.
 
 ### 🚀 Project Setup (Optional):
@@ -73,3 +68,6 @@ sudo rm -rf /var/log/apache2/<project_name>-error.log
 sudo rm -rf /var/log/apache2/<project_name>-access.log
 sudo sed -i "/<project_name>.local/d" /etc/hosts
 ```
+## 📜 License
+
+This project is licensed under the [MIT License](LICENSE).
