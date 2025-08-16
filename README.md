@@ -16,35 +16,35 @@ For any issues or suggestions, feel free to open an issue in the GitHub reposito
 - Additional PHP modules (`libapache2-mod-php`, `php-mysql`, etc.)
 - **UFW** (Firewall)
 
-### ⚙️ Configures Apache:
+### Configures Apache:
 - Sets a default `ServerName` to suppress warnings.
 - Restarts the Apache service to apply changes.
 
-### 🔐 Firewall Configuration:
+### Firewall Configuration:
 - Enables **UFW** and allows traffic for **Apache** and **SSH**.
 
-### 🚀 Project Setup (Optional):
+### Project Setup (Optional):
 - Creates a new project directory.
 - Sets up an Apache virtual host.
 - Creates a MySQL database for the project.
 - Adds the project to `/etc/hosts` for local access.
 
-### ✅ Verification:
+### Verification:
 - Displays installed versions of **Apache**, **MySQL**, and **PHP**.
 
-### 📝 Logs:
+### Logs:
 - All script output is logged to `/var/log/lamp_install.log`.
 
 ---
 
-## 💡 Prerequisites
+## Prerequisites
 - An Ubuntu-based system.
 - Basic familiarity with the Linux terminal.
 - The script must be run as root (or with `sudo`).
 
 ---
 
-## 🚀 How to Use
+## How to Use
 
 ### Step 1: Download the Script
 Clone the repository or download the script:
@@ -68,6 +68,6 @@ sudo rm -rf /var/log/apache2/<project_name>-error.log
 sudo rm -rf /var/log/apache2/<project_name>-access.log
 sudo sed -i "/<project_name>.local/d" /etc/hosts
 ```
-## 📜 License
+## License
 
 This project is licensed under the [MIT License](LICENSE).
