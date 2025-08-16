@@ -9,7 +9,7 @@ For any issues or suggestions, feel free to open an issue in the GitHub reposito
 
 ## What the Script Does
 
-### 🛠️ Installs Required Software:
+### Installs Required Software:
 - **Apache** (Web Server)
 - **MySQL** (Database Server)
 - **PHP** (Server-side Scripting Language)
