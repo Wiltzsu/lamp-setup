@@ -3,8 +3,6 @@
 This script automates the setup of a **LAMP stack (Linux, Apache, MySQL, PHP)** on Ubuntu-based systems. It includes options to create a development environment with a virtual host and database for your project. The script is designed to reduce manual work and ensure a smooth installation process.
 This script was developed as part of a thesis project to explore automation in LAMP stack setup.
 
-For any issues or suggestions, feel free to open an issue in the GitHub repository.
-
 ---
 
 ## What the Script Does
